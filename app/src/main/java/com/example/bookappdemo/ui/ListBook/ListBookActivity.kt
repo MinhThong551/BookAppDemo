@@ -12,13 +12,6 @@ import com.example.bookappdemo.MyApp
 import com.example.bookappdemo.data.repository.BookRepository
 import com.example.bookappdemo.ui.base.ListBookViewModelFactory
 
-
-
-
-
-
-
-
 class ListBookActivity : ComponentActivity() {
 
     private lateinit var viewModel: ListBookViewModel

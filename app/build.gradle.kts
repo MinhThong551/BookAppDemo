@@ -53,7 +53,7 @@ dependencies {
 
     implementation(libs.realm.library.base)
     implementation("io.coil-kt:coil-compose:2.6.0")
-
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9")
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
