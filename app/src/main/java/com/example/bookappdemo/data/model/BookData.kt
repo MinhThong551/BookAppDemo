@@ -1,8 +1,12 @@
 package com.example.bookappdemo.data.model
 
 data class BookData(
-    var author :String?=null,
-    var name : String?=null,
-    var description :String?=null
-
+    val id: String,
+    val title: String,
+    val author: String,
+    val rating: Double,
+    val image: String
 )
+
+
+
