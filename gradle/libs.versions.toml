@@ -1,7 +1,6 @@
 [versions]
 agp = "8.7.3"
 kotlin = "1.9.24"
-# Đã hạ cấp các thư viện dưới đây để tương thích với SDK 35
 coreKtx = "1.15.0"              # Hạ từ 1.17.0 -> 1.15.0
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -10,6 +9,8 @@ lifecycleRuntimeKtx = "2.8.7"   # Bản ổn định
 activityCompose = "1.9.3"       # Hạ từ 1.12.1 -> 1.9.3
 composeBom = "2024.11.00"       # Bản ổn định
 realm = "1.16.0"
+coroutines = "1.7.3"
+coil = "2.7.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,7 +32,10 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 
 # Realm Library
 realm-library-base = { group = "io.realm.kotlin", name = "library-base", version.ref = "realm" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

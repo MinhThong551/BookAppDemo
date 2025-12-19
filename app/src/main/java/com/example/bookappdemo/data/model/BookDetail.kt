@@ -5,7 +5,6 @@ import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmList
 
 class BookDetail : EmbeddedRealmObject {
-
     var images: RealmList<ImageInfo> = realmListOf()
 
     var description: String = ""
@@ -13,11 +12,11 @@ class BookDetail : EmbeddedRealmObject {
     var language: String = "en"
 
 
-    var rating: Double = 0.0           // rating trung bình
-    var ratingCount: Int = 0           // số lượt đánh giá
+    var rating: Double = 0.0
+    var ratingCount: Int = 0
 
     var publisher: String = ""
-    var publishDate: String = ""       // ISO: yyyy-MM-dd
+    var publishDate: String = ""
     var pages: Int = 0
 
     var categories: RealmList<String> = realmListOf()

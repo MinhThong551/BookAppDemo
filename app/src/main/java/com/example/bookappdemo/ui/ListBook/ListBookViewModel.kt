@@ -10,9 +10,12 @@ import com.example.bookappdemo.data.model.BookData
 import com.example.bookappdemo.data.model.BookDetail
 import com.example.bookappdemo.data.repository.BookRepository
 import com.example.bookappdemo.ui.base.BookDetailUiState
+import com.example.bookappdemo.ui.base.toUiState
 import com.example.bookappdemo.ui.mapper.toUi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -23,39 +26,20 @@ class ListBookViewModel(
 
     var selectedBookId: String? = null
         private set
-
-    var isEditMode by mutableStateOf(false)
-        private set
-
-    fun enableEdit() {
-        isEditMode = true
-    }
-
-    fun cancelEdit() {
-        isEditMode = false
-    }
+    private val _selectedBookUiState = mutableStateOf<BookDetailUiState?>(null)
+    val selectedBookUiState: BookDetailUiState?
+        get() = _selectedBookUiState.value
     fun saveEdit(updated: BookDetailUiState) {
         val bookId = selectedBookId ?: return
-        viewModelScope.launch {
-            repository.updateBook(bookId) {
-                description = updated.description
-                summary = updated.summary
-                language = updated.language
-                publisher = updated.publisher
-                publishDate = updated.publishDate
-                pages = updated.pages
-                rating = updated.rating
-                ratingCount = updated.ratingCount
-                price = updated.price
-                currency = updated.currency
-            }
-            // Cập nhật lại UI sau khi lưu thành công
-            onBookClick(bookId)
-            isEditMode = false
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.updateBookFull(bookId, updated)
         }
-    }
+            onBookClick(bookId)
+        }
+
     val books = repository.observeBooks()
         .map { list -> list.map { it.toUi() } }
+        .flowOn(Dispatchers.Default)
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
@@ -63,46 +47,48 @@ class ListBookViewModel(
         )
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.insertSampleData()
         }
     }
 
-    private val _selectedBookDetail = mutableStateOf<BookDetail?>(null)
-    val selectedBookDetail: BookDetail?
-        get() = _selectedBookDetail.value
-
     fun onBookClick(bookId: String) {
         selectedBookId = bookId
-        val book = repository.getBookById(bookId)
-        _selectedBookDetail.value = book?.detail
+        viewModelScope.launch(Dispatchers.IO) {
+            val book = repository.getBookById(bookId)
+            _selectedBookUiState.value = book?.toUiState()        }
     }
 
-
     fun dismissDetail() {
-        _selectedBookDetail.value = null
+        _selectedBookUiState.value = null
     }
 
     fun deleteBook(bookId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.deleteBook(bookId)
+            dismissDetail()
         }
     }
 
 
-    fun updateBook(bookId: String, update: BookDetail.() -> Unit) {
-        viewModelScope.launch {
-            repository.updateBook(bookId, update)
-        }
-    }
-
-    fun addBook(author: Author, detail: BookDetail) {
-        viewModelScope.launch {
-            repository.addBook(
-                title = detail.summary.take(30),
-                author = author,
-                detail = detail
-            )
+//    fun updateBook(bookId: String, update: BookDetail.() -> Unit) {
+//         viewModelScope.launch(Dispatchers.IO) {
+//            repository.updateBook(bookId, update)
+//        }
+//    }
+//
+//    fun addBook(author: Author, detail: BookDetail) {
+//        viewModelScope.launch(Dispatchers.IO){
+//            repository.addBook(
+//                title = detail.summary.take(30),
+//                author = author,
+//                detail = detail
+//            )
+//        }
+//    }
+    fun addSimpleBook(title: String, authorName: String) {
+        viewModelScope.launch(Dispatchers.IO){
+            repository.addSimpleBook(title, authorName)
         }
     }
 }
