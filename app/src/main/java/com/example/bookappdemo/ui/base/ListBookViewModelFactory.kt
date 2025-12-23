@@ -3,7 +3,7 @@ package com.example.bookappdemo.ui.base
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.bookappdemo.data.repository.BookRepository
-import com.example.bookappdemo.ui.ListBook.ListBookViewModel
+import com.example.bookappdemo.ui.listBook.ListBookViewModel
 
 class ListBookViewModelFactory(
     private val repository: BookRepository

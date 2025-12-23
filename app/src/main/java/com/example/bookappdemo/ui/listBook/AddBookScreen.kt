@@ -7,20 +7,28 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.bookappdemo.ui.ListBook.ListBookViewModel
 import com.example.bookappdemo.ui.components.BottomNavItem
 import com.example.bookappdemo.ui.components.MyBottomNavigationBar
+import kotlinx.coroutines.flow.Flow
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddBookScreen(
-    viewModel: ListBookViewModel,
-    onNavigateToHome: () -> Unit
+    onNavigateToHome: () -> Unit,
+    onSaveClick: (String, String) -> Unit,
+    toastMessageFlow: Flow<String>? = null
 ) {
     var title by remember { mutableStateOf("") }
     var author by remember { mutableStateOf("") }
     val context = LocalContext.current
 
+    LaunchedEffect(Unit) {
+        toastMessageFlow?.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            if(message.contains("SUCCESS")) onNavigateToHome()
+        }
+    }
     Scaffold(
         topBar = { TopAppBar(title = { Text("➕ ADD NEW BOOK") }) },
         bottomBar = {
@@ -47,9 +55,7 @@ fun AddBookScreen(
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 onClick = {
-                    viewModel.addSimpleBook(title, author)
-                    Toast.makeText(context, "Added: $title", Toast.LENGTH_SHORT).show()
-                    onNavigateToHome()
+                    onSaveClick(title, author)
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 enabled = title.isNotBlank() && author.isNotBlank()

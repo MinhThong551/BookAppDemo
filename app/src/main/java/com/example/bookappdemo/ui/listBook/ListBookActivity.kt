@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.example.bookappdemo.ui.ListBook
+package com.example.bookappdemo.ui.listBook
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -28,8 +28,7 @@ class ListBookActivity : ComponentActivity() {
 
         val repository = BookRepository(MyApp.realm)
 
-        viewModel = ViewModelProvider(
-            this,
+        viewModel = ViewModelProvider(this,
             ListBookViewModelFactory(repository)
         )[ListBookViewModel::class.java]
 
@@ -41,28 +40,35 @@ class ListBookActivity : ComponentActivity() {
 @Composable
 fun MainAppContent(viewModel: ListBookViewModel) {
     var currentScreen by remember { mutableStateOf(BottomNavItem.Home) }
-
+    val isLoading by viewModel.isLoading.collectAsState()
     val books by viewModel.books.collectAsState()
     val selectedUiState = viewModel.selectedBookUiState
-    val selectedBookId = viewModel.selectedBookId
 
     when (currentScreen) {
         BottomNavItem.Home -> {
             ListBookScreen(
                 books = books,
                 selectedUiState = selectedUiState,
-                selectedBookId = selectedBookId,
+                isLoading = isLoading,
                 onNavigateToAdd = { currentScreen = BottomNavItem.Add },
                 onBookClick = { viewModel.onBookClick(it) },
                 onDismissDetail = { viewModel.dismissDetail() },
                 onDeleteBook = { viewModel.deleteBook(it) },
                 onSaveEdit = { viewModel.saveEdit(it) },
+                toastMessageFlow = viewModel.toastMessage,
+                onSearchOnline = { query ->
+                    viewModel.searchOnline(query)
+                }
             )
         }
         BottomNavItem.Add -> {
             AddBookScreen(
-                viewModel = viewModel,
-                onNavigateToHome = { currentScreen = BottomNavItem.Home }
+                onNavigateToHome = { currentScreen = BottomNavItem.Home },
+
+                        onSaveClick = { title, author ->
+                    viewModel.addSimpleBook(title, author)
+                },
+                toastMessageFlow = viewModel.toastMessage
             )
         }
     }

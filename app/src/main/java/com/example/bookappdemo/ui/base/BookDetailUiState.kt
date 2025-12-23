@@ -4,7 +4,7 @@ import com.example.bookappdemo.data.model.Book
 import com.example.bookappdemo.data.model.BookDetail
 
 data class BookDetailUiState(
-
+    val id: String = "",
     val title: String = "",
     val authorName: String = "",
     val images: List<String> = emptyList(),
@@ -21,6 +21,7 @@ data class BookDetailUiState(
 )
 fun Book.toUiState(): BookDetailUiState {
     return BookDetailUiState(
+        id = this.id.toHexString(),
         title = this.title,
         authorName = this.author?.fullName ?: "",
 

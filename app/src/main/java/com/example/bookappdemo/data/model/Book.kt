@@ -7,6 +7,7 @@ import org.mongodb.kbson.ObjectId
 class Book: RealmObject {
     @PrimaryKey
     var id : ObjectId = ObjectId()
+    var remoteId: String = ""
     var title:String = ""
     var author: Author?=null
     var detail: BookDetail?=null
