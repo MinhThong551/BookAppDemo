@@ -1,9 +1,10 @@
-package com.example.bookappdemo.ui.AddBook
+package com.example.bookappdemo.ui.listBook
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -17,18 +18,10 @@ import kotlinx.coroutines.flow.Flow
 fun AddBookScreen(
     onNavigateToHome: () -> Unit,
     onSaveClick: (String, String) -> Unit,
-    toastMessageFlow: Flow<String>? = null
-) {
-    var title by remember { mutableStateOf("") }
-    var author by remember { mutableStateOf("") }
-    val context = LocalContext.current
+     ) {
+    var title by rememberSaveable { mutableStateOf("") }
+    var author by rememberSaveable { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        toastMessageFlow?.collect { message ->
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-            if(message.contains("SUCCESS")) onNavigateToHome()
-        }
-    }
     Scaffold(
         topBar = { TopAppBar(title = { Text("➕ ADD NEW BOOK") }) },
         bottomBar = {
@@ -41,21 +34,27 @@ fun AddBookScreen(
         Column(modifier = Modifier.padding(padding).padding(16.dp)) {
             OutlinedTextField(
                 value = title,
-                onValueChange = { title = it },
+                onValueChange = { input ->
+                    title = input.replace("\n", "").replace("\t", "")
+                },
                 label = { Text("Title") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = author,
-                onValueChange = { author = it },
+                onValueChange = { input ->
+                    author= input.replace("\n", "").replace("\t", "")
+                },
                 label = { Text("Author") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 onClick = {
-                    onSaveClick(title, author)
+                    val cleanTitle = title.trim().replace(Regex("\\s+"), " ")
+                    val cleanAuthor = author.trim().replace(Regex("\\s+"), " ")
+                    onSaveClick(cleanTitle, cleanAuthor)
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 enabled = title.isNotBlank() && author.isNotBlank()

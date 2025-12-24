@@ -22,7 +22,6 @@
     import androidx.compose.ui.draw.clip
     import androidx.compose.ui.graphics.Color
     import androidx.compose.ui.layout.ContentScale
-    import androidx.compose.ui.platform.LocalContext
     import androidx.compose.ui.text.font.FontWeight
     import androidx.compose.ui.unit.dp
     import androidx.compose.ui.unit.sp
@@ -46,16 +45,16 @@
         onSaveEdit: (BookDetailUiState) -> Unit,
         isLoading: Boolean,
         onSearchOnline: (String) -> Unit,
-        toastMessageFlow: Flow<String>? = null
     ) {
-        var searchQuery by remember { mutableStateOf("") }
-        val context = LocalContext.current
+        var searchQuery by rememberSaveable { mutableStateOf("") }
 
-        LaunchedEffect(Unit) {
-            toastMessageFlow?.collect { message ->
-                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-            }
-        }
+//        val context = LocalContext.current
+//
+//        LaunchedEffect(Unit) {
+//            toastMessageFlow?.collect { message ->
+//                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+//            }
+//        }
         val filteredBooks = remember(books, searchQuery) {
             books.filter {
                 it.title.contains(searchQuery, ignoreCase = true) ||
@@ -93,11 +92,10 @@
                     SearchBar(
                         query = searchQuery,
                         onQueryChange = { searchQuery = it },
-                        onSearchClick = { onSearchOnline(searchQuery) }, // Gọi ViewModel khi bấm nút
+                        onSearchClick = { onSearchOnline(searchQuery) },
                         isLoading = isLoading
                     )
 
-                    // Hiển thị thanh loading nếu đang tải
                     if (isLoading) {
                         LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                     }
@@ -132,7 +130,9 @@
             modifier = modifier.fillMaxSize(),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
-            items(books) { book ->
+            items(
+                items = books,
+                key = { book -> book.id }) { book ->
                 BookCard(
                     book = book,
                     onClick = { onBookClick(book.id) }
@@ -199,7 +199,7 @@
         onSaveClick: (BookDetailUiState) -> Unit,
         onCancelEdit: () -> Unit
     ) {
-        var uiState by remember(initialUiState) { mutableStateOf(initialUiState) }
+        var uiState by rememberSaveable(initialUiState) { mutableStateOf(initialUiState) }
 
         Dialog(onDismissRequest = onDismiss) {
             Card(
@@ -211,7 +211,6 @@
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
 
-                    // --- PHẦN ĐÃ CHỈNH SỬA: Header bao gồm nút tắt ---
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -238,16 +237,13 @@
                             text = if (isEditMode) "✏️ Update Book" else "📚 Book Detail",
                             style = MaterialTheme.typography.headlineSmall,
                             color = MaterialTheme.colorScheme.primary,
-                            // Bỏ padding bottom ở đây vì đã có ở Row
                         )
                     }
-                    // --- KẾT THÚC PHẦN CHỈNH SỬA ---
 
                     LazyColumn(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // ... (Phần code bên dưới giữ nguyên như cũ)
                         item {
                             Text(
                                 text = if (isEditMode) "Image URLs (Links)" else "Images",

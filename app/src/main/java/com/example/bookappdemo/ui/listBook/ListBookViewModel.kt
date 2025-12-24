@@ -9,13 +9,11 @@ import com.example.bookappdemo.ui.base.toUiState
 import com.example.bookappdemo.ui.mapper.toUi
 import com.example.bookappdemo.utils.Resource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -23,22 +21,17 @@ class ListBookViewModel(
     private val repository: BookRepository
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
+//    private val _isLoading = mutableStateOf(false)
     val isLoading = _isLoading.asStateFlow()
-
-    private val _toastMessage = Channel<String>()
-    val toastMessage = _toastMessage.receiveAsFlow()
-    private val _selectedBookUiState = mutableStateOf<BookDetailUiState?>(null)
-    val selectedBookUiState: BookDetailUiState?
-        get() = _selectedBookUiState.value
+    private val _toastMessage = MutableStateFlow<String?>(null)
+    val toastMessage = _toastMessage.asStateFlow()
+    private val _selectedBookUiState = MutableStateFlow<BookDetailUiState?>(null)
+    val selectedBookUiState = _selectedBookUiState.asStateFlow()
 
     val books = repository.observeBooks()
         .map { list -> list.map { it.toUi() } }
         .flowOn(Dispatchers.Default)
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
-            emptyList()
-        )
+
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -46,6 +39,10 @@ class ListBookViewModel(
             repository.syncDefaultBooks()
             _isLoading.value = false
         }
+    }
+
+    fun onToastShow() {
+        _toastMessage.value = null
     }
 
     fun onBookClick(bookId: String) {
@@ -62,17 +59,15 @@ class ListBookViewModel(
     fun deleteBook(bookId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
-
             val result = repository.deleteBook(bookId)
 
             when (result) {
                 is Resource.Success -> {
-                    _toastMessage.send("DELETE SUCCESS")
-                    dismissDetail() // Đóng popup chi tiết
+                    _toastMessage.value= "DELETE SUCCESS"
+                    dismissDetail()
                 }
                 is Resource.Error -> {
-                    val msg = result.message ?: "DELETE FAIL"
-                    _toastMessage.send(msg)
+                    _toastMessage.value = result.message ?: "DELETE FAIL"
                 }
                 else -> {}
             }
@@ -88,11 +83,11 @@ class ListBookViewModel(
 
             when (result) {
                 is Resource.Success -> {
-                    _toastMessage.send("ADD BOOK SUCCESS")
+                    _toastMessage.value ="ADD BOOK SUCCESS"
                 }
                 is Resource.Error -> {
-                    val msg = result.message ?: "ADD BOOK FAIL"
-                    _toastMessage.send(msg)
+                    _toastMessage.value= result.message ?: "ADD BOOK FAIL"
+
                 }
                 else -> {}
             }
@@ -109,7 +104,7 @@ class ListBookViewModel(
                 repository.searchAndSyncBooks(query)
             } catch (e: Exception) {
                 e.printStackTrace()
-                _toastMessage.send("SEARCH FAIL: ${e.message}")
+                _toastMessage.value = "SEARCH FAIL: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -125,12 +120,11 @@ class ListBookViewModel(
 
             when (result) {
                 is Resource.Success -> {
-                    _toastMessage.send("UPDATE SUCCESS")
+                    _toastMessage.value ="UPDATE SUCCESS"
                         onBookClick(updated.id)
                 }
                 is Resource.Error -> {
-                    val msg = result.message ?: "UPDATE FAIL"
-                    _toastMessage.send(msg)
+                    _toastMessage.value = result.message ?: "UPDATE FAIL"
                 }
                 else -> {}
             }

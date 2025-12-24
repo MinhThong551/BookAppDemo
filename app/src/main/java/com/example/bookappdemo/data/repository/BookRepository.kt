@@ -7,6 +7,7 @@ import com.example.bookappdemo.data.model.BookDetail
 import com.example.bookappdemo.data.model.ImageInfo
 import com.example.bookappdemo.data.api.RetrofitClient
 import com.example.bookappdemo.data.network.NetworkBook
+import com.example.bookappdemo.data.network.toBookDetail
 import com.example.bookappdemo.ui.base.BookDetailUiState
 import com.example.bookappdemo.utils.Resource
 import io.realm.kotlin.Realm
@@ -46,7 +47,11 @@ class BookRepository(
     suspend fun addSimpleBook(title: String, authorName: String): Resource<Boolean> {
        return withContext(Dispatchers.IO) {
             try {
-
+                val cleanTitle = title.trim()
+                val existingBook = realm.query<Book>("title == $0", cleanTitle).first().find()
+                if (existingBook != null) {
+                    return@withContext Resource.Error("Book existed")
+                }
                 val newNetBook = NetworkBook(
                     id = "",
                     title = title,
@@ -80,7 +85,15 @@ class BookRepository(
                 val localBook = findLocalBook(localId)
                 if (localBook == null || localBook.remoteId.isBlank()) {
                     return@withContext Resource.Error("BOOK IS NOT EXISTED")
+                }
+                val newTitle = uiState.title.trim()
 
+                val duplicateBook = realm.query<Book>("title == $0", newTitle).first().find()
+
+                if (duplicateBook != null) {
+                    if (duplicateBook.id.toHexString() != localId) {
+                        return@withContext Resource.Error("Book existed")
+                    }
                 }
                 val apiId = localBook.remoteId
                 val updateNetBook = NetworkBook(
@@ -140,7 +153,6 @@ class BookRepository(
         }
     }
 
-    // Hàm tìm kiếm sách
     suspend fun searchAndSyncBooks(query: String) {
         withContext(Dispatchers.IO) {
             try {
@@ -161,28 +173,7 @@ class BookRepository(
                     authorObj = copyToRealm(Author().apply { fullName = authorName })
                 }
 
-                val detailObj = BookDetail().apply {
-                    description = netBook.description ?: ""
-                    summary = netBook.summary ?: (netBook.description ?: "")
-
-                    price = netBook.price ?: 0.0
-                    currency = netBook.currency ?: "USD"
-
-                    rating = netBook.rating ?: 0.0
-                    ratingCount = netBook.ratingCount ?: 0
-                    pages = netBook.pages ?: 0
-
-                    language = netBook.language ?: "en"
-                    publisher = netBook.publisher ?: ""
-                    publishDate = netBook.publishDate ?: ""
-
-                    if (!netBook.images.isNullOrEmpty()) {
-                        images.add(ImageInfo().apply {
-                            url = netBook.images
-                            type = "cover"
-                        })
-                    }
-                }
+                val detailObj = netBook.toBookDetail()
 
                 // Lưu Book
                 val existingBook = query<Book>("remoteId== $0", netBook.id).first().find()

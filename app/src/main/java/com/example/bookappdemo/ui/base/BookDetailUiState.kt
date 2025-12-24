@@ -1,8 +1,12 @@
 package com.example.bookappdemo.ui.base
 
+import android.os.Parcelable
 import com.example.bookappdemo.data.model.Book
 import com.example.bookappdemo.data.model.BookDetail
+import kotlinx.android.parcel.Parcelize
 
+@Suppress("DEPRECATED_ANNOTATION")
+@Parcelize
 data class BookDetailUiState(
     val id: String = "",
     val title: String = "",
@@ -18,7 +22,8 @@ data class BookDetailUiState(
     val ratingCount: Int = 0,
     val price: Double = 0.0,
     val currency: String = ""
-)
+) : Parcelable
+
 fun Book.toUiState(): BookDetailUiState {
     return BookDetailUiState(
         id = this.id.toHexString(),
