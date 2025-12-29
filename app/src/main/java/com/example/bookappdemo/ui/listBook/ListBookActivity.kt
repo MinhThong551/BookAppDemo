@@ -6,82 +6,133 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
 import com.example.bookappdemo.MyApp
 import com.example.bookappdemo.data.repository.BookRepository
-
-
+import com.example.bookappdemo.data.repository.FirestoreRepository
+import com.example.bookappdemo.ui.base.FirestoreViewModelFactory
 import com.example.bookappdemo.ui.base.ListBookViewModelFactory
 import com.example.bookappdemo.ui.components.BottomNavItem
 
 class ListBookActivity : ComponentActivity() {
 
-    private lateinit var viewModel: ListBookViewModel
+    // Khai báo cả 2 ViewModel
+    private lateinit var listViewModel: ListBookViewModel
+    private lateinit var firestoreViewModel: FirestoreViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val repository = BookRepository(MyApp.realm)
+        // 1. Khởi tạo Repository
+        val bookRepository = BookRepository()
+        val firestoreRepository = FirestoreRepository(MyApp.realm)
 
-        viewModel = ViewModelProvider(this,
-            ListBookViewModelFactory(repository)
+        // 2. Khởi tạo ListBookViewModel (Cho Home + Add)
+        listViewModel = ViewModelProvider(
+            this,
+            ListBookViewModelFactory(bookRepository)
         )[ListBookViewModel::class.java]
 
+        // 3. Khởi tạo FirestoreViewModel (Cho Firestore)
+        // Việc tạo ở đây giúp ViewModel sống xuyên suốt, không bị load lại khi chuyển tab
+        firestoreViewModel = ViewModelProvider(
+            this,
+            FirestoreViewModelFactory(firestoreRepository)
+        )[FirestoreViewModel::class.java]
+
         setContent {
-            MainAppContent(viewModel = viewModel)
+            // Truyền cả 2 ViewModel vào Content chính
+            MainAppContent(
+                listViewModel = listViewModel,
+                firestoreViewModel = firestoreViewModel
+            )
         }
     }
 }
-@Composable
-fun MainAppContent(viewModel: ListBookViewModel) {
-    var currentScreen by rememberSaveable{ mutableStateOf(BottomNavItem.Home) }
-    val isLoading by viewModel.isLoading.collectAsState()
-    val books by remember(viewModel) { viewModel.books }
-        .collectAsState(initial = emptyList())
-    val selectedUiState by viewModel.selectedBookUiState.collectAsState()
-    val toastMessage by viewModel.toastMessage.collectAsState()
 
+@Composable
+fun MainAppContent(
+    listViewModel: ListBookViewModel,
+    firestoreViewModel: FirestoreViewModel
+) {
+    // Quản lý chuyển tab tại đây (Single Activity)
+    var currentScreen by rememberSaveable { mutableStateOf(BottomNavItem.Home) }
     val context = LocalContext.current
 
-    LaunchedEffect(toastMessage) {
-        toastMessage?.let { message ->
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-            viewModel.onToastShow()
+    // --- State cho HOME ---
+    val homeIsLoading by listViewModel.isLoading.collectAsState()
+    val homeBooks by remember(listViewModel) { listViewModel.books }
+        .collectAsState(initial = emptyList())
+    val homeSelectedUiState by listViewModel.selectedBookUiState.collectAsState()
+    val homeToast by listViewModel.toastMessage.collectAsState()
+
+    // --- State cho FIRESTORE ---
+    val fireIsLoading by firestoreViewModel.isLoading.collectAsState()
+    val fireBooks by remember(firestoreViewModel) { firestoreViewModel.books }
+        .collectAsState(initial = emptyList())
+    val fireSelectedUiState by firestoreViewModel.selectedBookUiState.collectAsState()
+    val fireToast by firestoreViewModel.toastMessage.collectAsState()
+
+
+    // Xử lý Toast chung cho cả 2 ViewModel
+    LaunchedEffect(homeToast, fireToast) {
+        homeToast?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            listViewModel.onToastShow()
+        }
+        fireToast?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            firestoreViewModel.onToastShow()
         }
     }
+
+    // Điều hướng nội dung dựa trên currentScreen
     when (currentScreen) {
         BottomNavItem.Home -> {
             ListBookScreen(
-                books = books,
-                selectedUiState = selectedUiState,
-                isLoading = isLoading,
+                books = homeBooks,
+                selectedUiState = homeSelectedUiState,
+                isLoading = homeIsLoading,
                 onNavigateToAdd = { currentScreen = BottomNavItem.Add },
-                onBookClick = { viewModel.onBookClick(it) },
-                onDismissDetail = { viewModel.dismissDetail() },
-                onDeleteBook = { viewModel.deleteBook(it) },
-                onSaveEdit = { viewModel.saveEdit(it) },
-                onSearchOnline = { query ->
-                    viewModel.searchOnline(query)
-                }
+                onNavigateToFirestore = { currentScreen = BottomNavItem.FireStore },
+                onBookClick = { listViewModel.onBookClick(it) },
+                onDismissDetail = { listViewModel.dismissDetail() },
+                onDeleteBook = { listViewModel.deleteBook(it) },
+                onSaveEdit = { listViewModel.saveEdit(it) },
+                onSearchOnline = { query -> listViewModel.searchOnline(query) }
             )
         }
+
         BottomNavItem.Add -> {
             AddBookScreen(
                 onNavigateToHome = { currentScreen = BottomNavItem.Home },
+                onNavigateToFirestore = { currentScreen = BottomNavItem.FireStore },
+                onSaveClick = { title, author ->
+                    listViewModel.addSimpleBook(title, author)
 
-                        onSaveClick = { title, author ->
-                    viewModel.addSimpleBook(title, author)
                 },
+            )
+        }
+
+        BottomNavItem.FireStore -> {
+            ListBookFirestoreScreen(
+                books = fireBooks,
+                selectedUiState = fireSelectedUiState,
+                isLoading = fireIsLoading,
+
+                onNavigateHome = { currentScreen = BottomNavItem.Home },
+                onNavigateToAdd = { currentScreen = BottomNavItem.Add },
+
+                onBookClick = { firestoreViewModel.onBookClick(it) },
+                onDismissDetail = { firestoreViewModel.dismissDetail() },
+                onSearchLocal = { /* Logic search local nếu cần */ }
             )
         }
     }

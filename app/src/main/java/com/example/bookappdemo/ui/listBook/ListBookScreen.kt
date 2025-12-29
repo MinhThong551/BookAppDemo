@@ -45,6 +45,7 @@
         onSaveEdit: (BookDetailUiState) -> Unit,
         isLoading: Boolean,
         onSearchOnline: (String) -> Unit,
+        onNavigateToFirestore: () -> Unit,
     ) {
         var searchQuery by rememberSaveable { mutableStateOf("") }
 
@@ -88,7 +89,8 @@
         Scaffold(
             topBar = {
                 Column {
-                    TopAppBar(title = { Text("📚 Book Shelf") })
+                    TopAppBar(title = { Text("📚 Book Shelf") }
+                    )
                     SearchBar(
                         query = searchQuery,
                         onQueryChange = { searchQuery = it },
@@ -104,7 +106,11 @@
             bottomBar = {
                 MyBottomNavigationBar(
                     selectedTab = BottomNavItem.Home,
-                    onTabSelected = { if (it == BottomNavItem.Add) onNavigateToAdd() }
+                    onTabSelected = { if (it == BottomNavItem.Add) {
+                        onNavigateToAdd()
+                    } else if (it == BottomNavItem.FireStore) {
+                        onNavigateToFirestore()
+                    } }
                 )
             }
         ) { padding ->

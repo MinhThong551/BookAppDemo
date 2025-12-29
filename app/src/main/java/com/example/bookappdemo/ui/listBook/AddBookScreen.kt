@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 @Composable
 fun AddBookScreen(
     onNavigateToHome: () -> Unit,
+    onNavigateToFirestore: () -> Unit,
     onSaveClick: (String, String) -> Unit,
      ) {
     var title by rememberSaveable { mutableStateOf("") }
@@ -27,7 +28,11 @@ fun AddBookScreen(
         bottomBar = {
             MyBottomNavigationBar(
                 selectedTab = BottomNavItem.Add,
-                onTabSelected = { if (it == BottomNavItem.Home) onNavigateToHome() }
+                onTabSelected = { if (it == BottomNavItem.Home) {
+                    onNavigateToHome()
+                }else {
+                    onNavigateToFirestore()
+                } }
             )
         }
     ) { padding ->

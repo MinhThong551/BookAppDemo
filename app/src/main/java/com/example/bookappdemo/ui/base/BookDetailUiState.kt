@@ -2,7 +2,9 @@ package com.example.bookappdemo.ui.base
 
 import android.os.Parcelable
 import com.example.bookappdemo.data.model.Book
+import com.example.bookappdemo.data.model.BookData
 import com.example.bookappdemo.data.model.BookDetail
+import com.example.bookappdemo.data.network.NetworkBook
 import kotlinx.android.parcel.Parcelize
 
 @Suppress("DEPRECATED_ANNOTATION")
@@ -61,3 +63,31 @@ fun BookDetail.toUiState(
     price = this.price,
     currency = this.currency
 )
+fun BookDetailUiState.toNetworkBook(): NetworkBook {
+    return NetworkBook(
+        id = "",
+        title = this.title,
+        authorName = this.authorName,
+        description = this.description,
+        summary = this.summary,
+        price = this.price,
+        currency = this.currency,
+        rating = this.rating,
+        ratingCount = this.ratingCount,
+        pages = this.pages,
+        language = this.language,
+        publisher = this.publisher,
+        publishDate = this.publishDate,
+        images = this.images
+    )
+
+}
+fun BookDetailUiState.toBookData(): BookData {
+    return BookData(
+        id = this.id,
+        title = this.title,
+        author = this.authorName,
+        rating = this.rating,
+        image = this.images.firstOrNull() ?: ""
+    )
+}

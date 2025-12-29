@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.realm.kotlin)
     id("kotlin-parcelize")
+    id("com.google.gms.google-services")
 //    alias(libs.plugins.compose.compiler)
 }
 
@@ -65,7 +66,7 @@ dependencies {
     implementation("com.google.firebase:firebase-config")
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-firestore")
-
+    implementation("com.google.android.material:material:1.11.0")
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

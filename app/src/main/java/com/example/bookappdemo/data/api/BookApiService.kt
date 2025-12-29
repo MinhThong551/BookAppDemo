@@ -14,6 +14,9 @@ interface BookApiService {
     @GET("Books")
     suspend fun getRecommendedBooks(): List<NetworkBook>
 
+    @GET("Books")
+    suspend fun getAllBooks(): List<NetworkBook>
+
     @GET("Books/{id}")
     suspend fun getBookById(@Path("id") id: String): NetworkBook
 

@@ -1,55 +1,64 @@
 package com.example.bookappdemo.ui.listBook
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bookappdemo.data.model.BookData
 import com.example.bookappdemo.data.repository.BookRepository
 import com.example.bookappdemo.ui.base.BookDetailUiState
-import com.example.bookappdemo.ui.base.toUiState
-import com.example.bookappdemo.ui.mapper.toUi
+import com.example.bookappdemo.ui.base.toBookData
 import com.example.bookappdemo.utils.Resource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ListBookViewModel(
     private val repository: BookRepository
 ) : ViewModel() {
+
     private val _isLoading = MutableStateFlow(false)
-//    private val _isLoading = mutableStateOf(false)
     val isLoading = _isLoading.asStateFlow()
+
     private val _toastMessage = MutableStateFlow<String?>(null)
     val toastMessage = _toastMessage.asStateFlow()
+
     private val _selectedBookUiState = MutableStateFlow<BookDetailUiState?>(null)
     val selectedBookUiState = _selectedBookUiState.asStateFlow()
 
-    val books = repository.observeBooks()
-        .map { list -> list.map { it.toUi() } }
-        .flowOn(Dispatchers.Default)
+    private val _books = MutableStateFlow<List<BookData>>(emptyList())
+    val books = _books.asStateFlow()
 
+    private var cachedUiStates = mutableListOf<BookDetailUiState>()
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        loadData()
+    }
+
+    // Hàm load dữ liệu từ API
+    fun loadData() {
+        viewModelScope.launch {
             _isLoading.value = true
-            repository.syncDefaultBooks()
+            when (val result = repository.getAllBooks()) {
+                is Resource.Success -> {
+                    cachedUiStates = result.data?.toMutableList() ?: mutableListOf()
+                    updateBookDataList()
+                }
+                is Resource.Error -> {
+                    _toastMessage.value = result.message
+                }
+                else -> {}
+            }
             _isLoading.value = false
         }
     }
 
-    fun onToastShow() {
-        _toastMessage.value = null
+    private fun updateBookDataList() {
+        _books.value = cachedUiStates.map { it.toBookData() }
     }
 
     fun onBookClick(bookId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val book = repository.getBookById(bookId)
-            _selectedBookUiState.value = book?.toUiState()
-        }
+        val book = cachedUiStates.find { it.id == bookId }
+        _selectedBookUiState.value = book
     }
 
     fun dismissDetail() {
@@ -57,18 +66,17 @@ class ListBookViewModel(
     }
 
     fun deleteBook(bookId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             _isLoading.value = true
-            val result = repository.deleteBook(bookId)
-
-            when (result) {
+            when (repository.deleteBook(bookId)) {
                 is Resource.Success -> {
-                    _toastMessage.value= "DELETE SUCCESS"
+                    _toastMessage.value = "DELETE SUCCESS"
+                    // Xóa khỏi list trong RAM để cập nhật UI ngay lập tức
+                    cachedUiStates.removeAll { it.id == bookId }
+                    updateBookDataList()
                     dismissDetail()
                 }
-                is Resource.Error -> {
-                    _toastMessage.value = result.message ?: "DELETE FAIL"
-                }
+                is Resource.Error -> _toastMessage.value = "DELETE FAILED"
                 else -> {}
             }
             _isLoading.value = false
@@ -76,19 +84,39 @@ class ListBookViewModel(
     }
 
     fun addSimpleBook(title: String, authorName: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             _isLoading.value = true
-
-            val result = repository.addSimpleBook(title, authorName)
-
-            when (result) {
+            when (val result = repository.addSimpleBook(title, authorName)) {
                 is Resource.Success -> {
-                    _toastMessage.value ="ADD BOOK SUCCESS"
+                    _toastMessage.value = "ADD SUCCESS"
+                    // Thêm vào list RAM
+                    result.data?.let { newItem ->
+                        cachedUiStates.add(0, newItem) // Thêm lên đầu
+                        updateBookDataList()
+                    }
                 }
-                is Resource.Error -> {
-                    _toastMessage.value= result.message ?: "ADD BOOK FAIL"
+                is Resource.Error -> _toastMessage.value = "ADD FAILED"
+                else -> {}
+            }
+            _isLoading.value = false
+        }
+    }
 
+    fun saveEdit(updated: BookDetailUiState) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            when (repository.updateBookFull(updated.id, updated)) {
+                is Resource.Success -> {
+                    _toastMessage.value = "UPDATE SUCCESS"
+                    // Cập nhật list RAM
+                    val index = cachedUiStates.indexOfFirst { it.id == updated.id }
+                    if (index != -1) {
+                        cachedUiStates[index] = updated
+                        updateBookDataList()
+                    }
+                    _selectedBookUiState.value = updated // Cập nhật luôn dialog
                 }
+                is Resource.Error -> _toastMessage.value = "UPDATE FAILED"
                 else -> {}
             }
             _isLoading.value = false
@@ -96,39 +124,23 @@ class ListBookViewModel(
     }
 
     fun searchOnline(query: String) {
-        if (query.isBlank()) return
-
-        viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.value = true
-            try {
-                repository.searchAndSyncBooks(query)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                _toastMessage.value = "SEARCH FAIL: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
+        if(query.isBlank()) {
+            loadData()
+            return
         }
-    }
-    fun saveEdit(updated: BookDetailUiState) {
-        if (updated.id.isBlank()) return
-
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             _isLoading.value = true
-
-            val result = repository.updateBookFull(updated.id, updated)
-
-            when (result) {
+            when (val result = repository.searchBooks(query)) {
                 is Resource.Success -> {
-                    _toastMessage.value ="UPDATE SUCCESS"
-                        onBookClick(updated.id)
+                    cachedUiStates = result.data?.toMutableList() ?: mutableListOf()
+                    updateBookDataList()
                 }
-                is Resource.Error -> {
-                    _toastMessage.value = result.message ?: "UPDATE FAIL"
-                }
+                is Resource.Error -> _toastMessage.value = "Search Failed"
                 else -> {}
             }
             _isLoading.value = false
         }
     }
+
+    fun onToastShow() { _toastMessage.value = null }
 }

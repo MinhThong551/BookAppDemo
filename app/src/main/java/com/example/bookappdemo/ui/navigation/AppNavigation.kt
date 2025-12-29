@@ -3,12 +3,14 @@ package com.example.bookappdemo.ui.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 
 enum class BottomNavItem(val title: String) {
     Home("Home"),
-    Add("Add")
+    Add("Add"),
+    FireStore("Firestore")
 }
 
 
@@ -28,6 +30,7 @@ fun MyBottomNavigationBar(
                         imageVector = when (item) {
                             BottomNavItem.Home -> Icons.Default.Home
                             BottomNavItem.Add -> Icons.Default.Add
+                            BottomNavItem.FireStore -> Icons.Default.Refresh
                         },
                         contentDescription = null
                     )

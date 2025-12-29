@@ -18,29 +18,4 @@ data class NetworkBook(
     @SerializedName("language") val language: String?,
     @SerializedName("publisher") val publisher: String?,
     @SerializedName("publishDate") val publishDate: String?,
-    @SerializedName("images") val images: String?
-)
-fun NetworkBook.toBookDetail(): BookDetail {
-    return BookDetail().apply {
-        description = this@toBookDetail.description ?: ""
-        summary = this@toBookDetail.summary ?: (this@toBookDetail.description ?: "")
-
-        price = this@toBookDetail.price ?: 0.0
-        currency = this@toBookDetail.currency ?: "USD"
-
-        rating = this@toBookDetail.rating ?: 0.0
-        ratingCount = this@toBookDetail.ratingCount ?: 0
-        pages = this@toBookDetail.pages ?: 0
-
-        language = this@toBookDetail.language ?: "en"
-        publisher = this@toBookDetail.publisher ?: ""
-        publishDate = this@toBookDetail.publishDate ?: ""
-
-        if (!this@toBookDetail.images.isNullOrEmpty()) {
-            images.add(ImageInfo().apply {
-                url = this@toBookDetail.images
-                type = "cover"
-            })
-        }
-    }
-}
+    @SerializedName("images") val images: List<String>?)
