@@ -1,7 +1,6 @@
 package com.example.bookappdemo.data.repository
 
-import BookApiService
-import com.example.bookappdemo.data.api.RetrofitClient
+import com.example.bookappdemo.data.api.BookApiService
 import com.example.bookappdemo.data.model.*
 import com.example.bookappdemo.ui.base.BookDetailUiState
 import com.example.bookappdemo.ui.mapper.toUiState
@@ -17,10 +16,11 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class FirestoreRepository(
+class FireStoreRepository @Inject constructor(
     private val realm: Realm,
-    private val apiService: BookApiService = RetrofitClient.instance
+    private val apiService: BookApiService
 ) {
 
 

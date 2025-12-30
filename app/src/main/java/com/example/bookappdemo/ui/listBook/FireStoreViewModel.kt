@@ -2,7 +2,7 @@ package com.example.bookappdemo.ui.listBook
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bookappdemo.data.repository.FirestoreRepository
+import com.example.bookappdemo.data.repository.FireStoreRepository
 import com.example.bookappdemo.ui.base.BookDetailUiState
 import com.example.bookappdemo.ui.base.toUiState
 import com.example.bookappdemo.ui.mapper.toUi
@@ -13,9 +13,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class FirestoreViewModel(
-    private val repository: FirestoreRepository
+class FirestoreViewModel @Inject constructor(
+    private val repository: FireStoreRepository
 ) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)

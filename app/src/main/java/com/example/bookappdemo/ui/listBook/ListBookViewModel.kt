@@ -11,8 +11,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ListBookViewModel(
+class ListBookViewModel @Inject constructor(
     private val repository: BookRepository
 ) : ViewModel() {
 
@@ -34,7 +35,6 @@ class ListBookViewModel(
         loadData()
     }
 
-    // Hàm load dữ liệu từ API
     fun loadData() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -71,7 +71,6 @@ class ListBookViewModel(
             when (repository.deleteBook(bookId)) {
                 is Resource.Success -> {
                     _toastMessage.value = "DELETE SUCCESS"
-                    // Xóa khỏi list trong RAM để cập nhật UI ngay lập tức
                     cachedUiStates.removeAll { it.id == bookId }
                     updateBookDataList()
                     dismissDetail()
@@ -89,7 +88,6 @@ class ListBookViewModel(
             when (val result = repository.addSimpleBook(title, authorName)) {
                 is Resource.Success -> {
                     _toastMessage.value = "ADD SUCCESS"
-                    // Thêm vào list RAM
                     result.data?.let { newItem ->
                         cachedUiStates.add(0, newItem) // Thêm lên đầu
                         updateBookDataList()

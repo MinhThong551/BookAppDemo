@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.realm.kotlin)
     id("kotlin-parcelize")
     id("com.google.gms.google-services")
+    id("kotlin-kapt")
 //    alias(libs.plugins.compose.compiler)
 }
 
@@ -67,6 +68,9 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.android.material:material:1.11.0")
+
+    implementation("com.google.dagger:dagger:2.48.1")
+    kapt("com.google.dagger:dagger-compiler:2.48.1")
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

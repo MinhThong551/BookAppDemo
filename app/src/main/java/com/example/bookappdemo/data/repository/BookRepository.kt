@@ -1,11 +1,10 @@
 package com.example.bookappdemo.data.repository
 
-import BookApiService
+import com.example.bookappdemo.data.api.BookApiService
 import com.example.bookappdemo.data.model.Author
 import com.example.bookappdemo.data.model.Book
 import com.example.bookappdemo.data.model.BookDetail
 import com.example.bookappdemo.data.model.ImageInfo
-import com.example.bookappdemo.data.api.RetrofitClient
 import com.example.bookappdemo.data.network.NetworkBook
 import com.example.bookappdemo.ui.base.BookDetailUiState
 import com.example.bookappdemo.ui.base.toNetworkBook
@@ -18,9 +17,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class BookRepository(
-    private val apiService: BookApiService = RetrofitClient.instance
+class BookRepository @Inject constructor(
+    private val apiService: BookApiService
 ) {
 
     suspend fun getAllBooks():Resource<List<BookDetailUiState>>{

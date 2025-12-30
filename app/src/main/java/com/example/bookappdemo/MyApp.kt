@@ -6,29 +6,19 @@ import com.example.bookappdemo.data.model.Author
 import com.example.bookappdemo.data.model.Book
 import com.example.bookappdemo.data.model.BookDetail
 import com.example.bookappdemo.data.model.ImageInfo
+import com.example.bookappdemo.di.component.AppComponent
+import com.example.bookappdemo.di.component.DaggerAppComponent
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 
 class MyApp : Application() {
-
-    companion object {
-        lateinit var realm: Realm
-    }
+    lateinit var appComponent: AppComponent
 
     override fun onCreate() {
         super.onCreate()
 
-        val config = RealmConfiguration.create(
-            schema = setOf(
-                Author::class,
-                Book::class,
-                BookDetail::class,
-                ImageInfo::class
-            )
-        )
+        appComponent = DaggerAppComponent.create()
 
-        realm = Realm.open(config)
-
-        Log.d("REALM_PATH", "Realm path = ${config.path}")
     }
+
 }

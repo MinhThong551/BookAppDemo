@@ -16,39 +16,24 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
 import com.example.bookappdemo.MyApp
 import com.example.bookappdemo.data.repository.BookRepository
-import com.example.bookappdemo.data.repository.FirestoreRepository
-import com.example.bookappdemo.ui.base.FirestoreViewModelFactory
-import com.example.bookappdemo.ui.base.ListBookViewModelFactory
+import com.example.bookappdemo.data.repository.FireStoreRepository
 import com.example.bookappdemo.ui.components.BottomNavItem
+import javax.inject.Inject
 
 class ListBookActivity : ComponentActivity() {
 
-    // Khai báo cả 2 ViewModel
+    @Inject
+    lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var listViewModel: ListBookViewModel
     private lateinit var firestoreViewModel: FirestoreViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        (application as MyApp).appComponent.inject(this)
         super.onCreate(savedInstanceState)
 
-        // 1. Khởi tạo Repository
-        val bookRepository = BookRepository()
-        val firestoreRepository = FirestoreRepository(MyApp.realm)
-
-        // 2. Khởi tạo ListBookViewModel (Cho Home + Add)
-        listViewModel = ViewModelProvider(
-            this,
-            ListBookViewModelFactory(bookRepository)
-        )[ListBookViewModel::class.java]
-
-        // 3. Khởi tạo FirestoreViewModel (Cho Firestore)
-        // Việc tạo ở đây giúp ViewModel sống xuyên suốt, không bị load lại khi chuyển tab
-        firestoreViewModel = ViewModelProvider(
-            this,
-            FirestoreViewModelFactory(firestoreRepository)
-        )[FirestoreViewModel::class.java]
-
+        listViewModel = ViewModelProvider(this, viewModelFactory)[ListBookViewModel::class.java]
+        firestoreViewModel = ViewModelProvider(this, viewModelFactory)[FirestoreViewModel::class.java]
         setContent {
-            // Truyền cả 2 ViewModel vào Content chính
             MainAppContent(
                 listViewModel = listViewModel,
                 firestoreViewModel = firestoreViewModel
@@ -62,18 +47,15 @@ fun MainAppContent(
     listViewModel: ListBookViewModel,
     firestoreViewModel: FirestoreViewModel
 ) {
-    // Quản lý chuyển tab tại đây (Single Activity)
     var currentScreen by rememberSaveable { mutableStateOf(BottomNavItem.Home) }
     val context = LocalContext.current
 
-    // --- State cho HOME ---
     val homeIsLoading by listViewModel.isLoading.collectAsState()
     val homeBooks by remember(listViewModel) { listViewModel.books }
         .collectAsState(initial = emptyList())
     val homeSelectedUiState by listViewModel.selectedBookUiState.collectAsState()
     val homeToast by listViewModel.toastMessage.collectAsState()
 
-    // --- State cho FIRESTORE ---
     val fireIsLoading by firestoreViewModel.isLoading.collectAsState()
     val fireBooks by remember(firestoreViewModel) { firestoreViewModel.books }
         .collectAsState(initial = emptyList())
@@ -81,7 +63,6 @@ fun MainAppContent(
     val fireToast by firestoreViewModel.toastMessage.collectAsState()
 
 
-    // Xử lý Toast chung cho cả 2 ViewModel
     LaunchedEffect(homeToast, fireToast) {
         homeToast?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
@@ -93,7 +74,7 @@ fun MainAppContent(
         }
     }
 
-    // Điều hướng nội dung dựa trên currentScreen
+
     when (currentScreen) {
         BottomNavItem.Home -> {
             ListBookScreen(
@@ -132,7 +113,7 @@ fun MainAppContent(
 
                 onBookClick = { firestoreViewModel.onBookClick(it) },
                 onDismissDetail = { firestoreViewModel.dismissDetail() },
-                onSearchLocal = { /* Logic search local nếu cần */ }
+                onSearchLocal = {}
             )
         }
     }
