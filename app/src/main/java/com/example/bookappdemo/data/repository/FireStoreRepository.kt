@@ -5,6 +5,7 @@ import com.example.bookappdemo.data.model.*
 import com.example.bookappdemo.ui.base.BookDetailUiState
 import com.example.bookappdemo.ui.mapper.toUiState
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import io.realm.kotlin.Realm
@@ -17,10 +18,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class FireStoreRepository @Inject constructor(
     private val realm: Realm,
-    private val apiService: BookApiService
+    private val apiService: BookApiService,
+    private val firestore: FirebaseFirestore
 ) {
 
 
@@ -73,7 +77,7 @@ class FireStoreRepository @Inject constructor(
     private fun startRealtimeSync() {
         firestoreListener?.remove()
 
-        firestoreListener = Firebase.firestore.collection("books")
+        firestoreListener = firestore.collection("books")
             .addSnapshotListener { snapshot, e ->
                 if (e != null) return@addSnapshotListener
 

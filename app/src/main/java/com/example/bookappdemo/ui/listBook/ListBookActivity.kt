@@ -87,7 +87,8 @@ fun MainAppContent(
                 onDismissDetail = { listViewModel.dismissDetail() },
                 onDeleteBook = { listViewModel.deleteBook(it) },
                 onSaveEdit = { listViewModel.saveEdit(it) },
-                onSearchOnline = { query -> listViewModel.searchOnline(query) }
+                onSearchOnline = { query -> listViewModel.searchOnline(query) },
+                onRefresh = { listViewModel.loadData() }
             )
         }
 
