@@ -18,7 +18,6 @@ import javax.inject.Inject
 class FirestoreViewModel @Inject constructor(
     private val repository: FireStoreRepository
 ) : ViewModel() {
-
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
@@ -27,39 +26,40 @@ class FirestoreViewModel @Inject constructor(
     private val _selectedBookUiState = MutableStateFlow<BookDetailUiState?>(null)
     val selectedBookUiState = _selectedBookUiState.asStateFlow()
     private var detailJob : Job? = null
+    private val _isPaginating = MutableStateFlow(false)
+    val isPaginating = _isPaginating.asStateFlow()
 
     val books = repository.observeBooks()
         .map { list -> list.map { it.toUi() } }
         .flowOn(Dispatchers.Default)
 
     init {
-
-            loadData()
+        refresh()
     }
-
-    fun loadData() {
+    fun refresh() {
         viewModelScope.launch {
             _isLoading.value = true
-            val success = repository.fetchAndSyncData()
-
-            if (!success) {
-                _toastMessage.value = "Failed to connect API / Sync"
-            }
+            repository.refreshData()
             _isLoading.value = false
+        }
+    }
+    fun loadNextPage() {
+        if (_isPaginating.value || repository.isLastPage) return
+
+        viewModelScope.launch {
+            _isPaginating.value = true
+            repository.loadNextPage()
+            _isPaginating.value = false
         }
     }
 
     fun onToastShow() { _toastMessage.value = null }
 
     fun onBookClick(bookId: String) {
-        // 1. Hủy việc lắng nghe cuốn sách cũ (nếu có) để tránh lỗi chồng chéo
         detailJob?.cancel()
 
-        // 2. Bắt đầu lắng nghe cuốn sách mới
         detailJob = viewModelScope.launch(Dispatchers.IO) {
             repository.observeBookById(bookId).collect { book ->
-                // Mỗi khi Realm cập nhật (do Firestore sync), dòng code này sẽ chạy lại
-                // _selectedBookUiState sẽ có dữ liệu mới -> UI Dialog tự vẽ lại ngay lập tức
                 _selectedBookUiState.value = book?.toUiState()
             }
         }

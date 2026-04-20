@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">BookAppDemo</string>
+    <!-- reCAPTCHA Enterprise (Android): create an Android key in Google Cloud Console for
+         applicationId com.example.bookappdemo and your debug/release SHA-1 fingerprints.
+         Paste the key ID here (non-empty). https://cloud.google.com/recaptcha/docs/create-key-mobile -->
+    <string name="recaptcha_enterprise_site_key" translatable="false">6Lde_OMsAAAAAOcli-sblz7plzHmDb18t9vii1L-</string>
+    <string name="recaptcha_not_ready">reCAPTCHA is not configured or still initializing. Set recaptcha_enterprise_site_key and wait a few seconds.</string>
+    <string name="recaptcha_token_demo_title">reCAPTCHA token (demo)</string>
+    <string name="recaptcha_execute_failed">reCAPTCHA execute failed</string>
 </resources>

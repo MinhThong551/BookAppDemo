@@ -23,18 +23,16 @@ class ListBookViewModel @Inject constructor(
     private val _toastMessage = MutableStateFlow<String?>(null)
     val toastMessage = _toastMessage.asStateFlow()
 
+    //úitae nên de activity
     private val _selectedBookUiState = MutableStateFlow<BookDetailUiState?>(null)
     val selectedBookUiState = _selectedBookUiState.asStateFlow()
 
     private val _books = MutableStateFlow<List<BookData>>(emptyList())
     val books = _books.asStateFlow()
-
     private var cachedUiStates = mutableListOf<BookDetailUiState>()
-
     init {
         loadData()
     }
-
     fun loadData() {
         viewModelScope.launch {
             _isLoading.value = true

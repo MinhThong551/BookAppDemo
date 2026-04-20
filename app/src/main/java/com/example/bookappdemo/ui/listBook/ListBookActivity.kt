@@ -6,17 +6,12 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelProvider
 import com.example.bookappdemo.MyApp
-import com.example.bookappdemo.data.repository.BookRepository
-import com.example.bookappdemo.data.repository.FireStoreRepository
 import com.example.bookappdemo.ui.components.BottomNavItem
 import javax.inject.Inject
 
@@ -33,6 +28,9 @@ class ListBookActivity : ComponentActivity() {
 
         listViewModel = ViewModelProvider(this, viewModelFactory)[ListBookViewModel::class.java]
         firestoreViewModel = ViewModelProvider(this, viewModelFactory)[FirestoreViewModel::class.java]
+
+        // Đã xóa toàn bộ logic khởi tạo RecaptchaClient ở đây
+
         setContent {
             MainAppContent(
                 listViewModel = listViewModel,
@@ -74,7 +72,6 @@ fun MainAppContent(
         }
     }
 
-
     when (currentScreen) {
         BottomNavItem.Home -> {
             ListBookScreen(
@@ -94,11 +91,11 @@ fun MainAppContent(
 
         BottomNavItem.Add -> {
             AddBookScreen(
+                // Đã xóa tham số recaptchaClient truyền vào đây
                 onNavigateToHome = { currentScreen = BottomNavItem.Home },
                 onNavigateToFirestore = { currentScreen = BottomNavItem.FireStore },
                 onSaveClick = { title, author ->
                     listViewModel.addSimpleBook(title, author)
-
                 },
             )
         }
@@ -108,13 +105,12 @@ fun MainAppContent(
                 books = fireBooks,
                 selectedUiState = fireSelectedUiState,
                 isLoading = fireIsLoading,
-
                 onNavigateHome = { currentScreen = BottomNavItem.Home },
                 onNavigateToAdd = { currentScreen = BottomNavItem.Add },
-
                 onBookClick = { firestoreViewModel.onBookClick(it) },
                 onDismissDetail = { firestoreViewModel.dismissDetail() },
-                onSearchLocal = {}
+                onSearchLocal = {},
+                onLoadMore = { firestoreViewModel.loadNextPage() }
             )
         }
     }

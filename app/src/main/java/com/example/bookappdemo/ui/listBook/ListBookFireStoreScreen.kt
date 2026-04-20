@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -44,7 +45,8 @@ fun ListBookFirestoreScreen(
     onNavigateToAdd: () -> Unit,
     onBookClick: (String) -> Unit,
     onDismissDetail: () -> Unit,
-    onSearchLocal: (String) -> Unit
+    onSearchLocal: (String) -> Unit,
+    onLoadMore: () -> Unit
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
@@ -72,7 +74,13 @@ fun ListBookFirestoreScreen(
                     .padding(bottom = 8.dp)
             ) {
                 CenterAlignedTopAppBar(
-                    title = { Text("🔥 Firestore Books", fontWeight = FontWeight.Bold, color = Color(0xFFD84315)) }, // Màu cam lửa
+                    title = {
+                        Text(
+                            "Firestore Books",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFD84315)
+                        )
+                    },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface
                     )
@@ -91,7 +99,9 @@ fun ListBookFirestoreScreen(
                 )
 
                 if (isLoading) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp))
+                    LinearProgressIndicator(modifier = Modifier
+                        .fillMaxWidth()
+                        .height(2.dp))
                 }
             }
         },
@@ -120,7 +130,8 @@ fun ListBookFirestoreScreen(
                     onBookClick = {
                         focusManager.clearFocus()
                         onBookClick(it)
-                    }
+                    },
+                    onLoadMore = onLoadMore
                 )
             }
         }
@@ -131,9 +142,29 @@ fun ListBookFirestoreScreen(
 fun FirestoreBookList(
     books: List<BookData>,
     onBookClick: (String) -> Unit,
+    onLoadMore: () -> Unit, //
     modifier: Modifier = Modifier
 ) {
+    val listState = rememberLazyListState()
+
+    val isAtBottom by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val totalItems = layoutInfo.totalItemsCount
+            val lastVisibleItemIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+
+            totalItems > 0 && lastVisibleItemIndex >= totalItems - 2
+        }
+    }
+
+    LaunchedEffect(isAtBottom) {
+        if (isAtBottom) {
+            onLoadMore()
+        }
+    }
+
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -176,7 +207,9 @@ fun FirestoreBookCard(
                 )
             }
             Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f).height(130.dp)) {
+            Column(Modifier
+                .weight(1f)
+                .height(130.dp)) {
                 Text(
                     text = book.title,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -191,7 +224,12 @@ fun FirestoreBookCard(
                 )
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Star, null, tint = Color(0xFFFFC107), modifier = Modifier.size(16.dp))
+                    Icon(
+                        Icons.Default.Star,
+                        null,
+                        tint = Color(0xFFFFC107),
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(Modifier.width(4.dp))
                     Text("${book.rating}", fontWeight = FontWeight.Bold)
                 }
@@ -203,13 +241,24 @@ fun FirestoreBookCard(
 @Composable
 fun FirestoreEmptyState(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.fillMaxSize().padding(32.dp),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(80.dp), tint = Color.Gray)
+        Icon(
+            Icons.Default.Refresh,
+            contentDescription = null,
+            modifier = Modifier.size(80.dp),
+            tint = Color.Gray
+        )
         Spacer(Modifier.height(16.dp))
-        Text("No books found in Firestore.", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+        Text(
+            "No books found in Firestore.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = Color.Gray
+        )
     }
 }
 
@@ -248,7 +297,10 @@ fun FirestoreBookDetailDialog(
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier
-                            .background(MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(50))
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(50)
+                            )
                             .size(36.dp)
                     ) {
                         Icon(
@@ -295,7 +347,10 @@ fun FirestoreBookDetailDialog(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(100.dp)
-                                    .background(Color.LightGray.copy(0.2f), RoundedCornerShape(12.dp)),
+                                    .background(
+                                        Color.LightGray.copy(0.2f),
+                                        RoundedCornerShape(12.dp)
+                                    ),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
@@ -319,7 +374,10 @@ fun FirestoreBookDetailDialog(
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.primary
                         )
-                        HorizontalDivider(modifier = Modifier.padding(top = 12.dp), color = Color.LightGray.copy(0.2f))
+                        HorizontalDivider(
+                            modifier = Modifier.padding(top = 12.dp),
+                            color = Color.LightGray.copy(0.2f)
+                        )
                     }
 
                     item {
@@ -365,7 +423,9 @@ fun FirestoreBookDetailDialog(
                         Surface(
                             color = Color(0xFFD84315).copy(alpha = 0.1f), // Màu nền cam nhạt
                             shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp)
                         ) {
                             Text(
                                 text = "Price: ${uiState.price} ${uiState.currency}",
@@ -389,7 +449,9 @@ fun ReadOnlyField(
     label: String,
     value: String
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 6.dp)) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
@@ -402,6 +464,9 @@ fun ReadOnlyField(
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
             modifier = Modifier.padding(top = 2.dp)
         )
-        HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f), modifier = Modifier.padding(top = 4.dp))
+        HorizontalDivider(
+            color = Color.LightGray.copy(alpha = 0.3f),
+            modifier = Modifier.padding(top = 4.dp)
+        )
     }
 }

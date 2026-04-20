@@ -57,7 +57,6 @@ fun ListBookScreen(
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
-    val pullRefreshState = rememberPullToRefreshState()
     val filteredBooks = remember(books, searchQuery) {
         books.filter {
             it.title.contains(searchQuery, ignoreCase = true) ||
@@ -96,7 +95,7 @@ fun ListBookScreen(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            "📚 Book Shelf",
+                            "Book Shelf",
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -129,60 +128,62 @@ fun ListBookScreen(
             )
         }
     ) { padding ->
-
-
-        PullToRefreshBox(
+        BookList(
+            books = filteredBooks,
             isRefreshing = isLoading,
-            onRefresh = { onRefresh() },
+            onRefresh = onRefresh,
+            onBookClick = {
+                focusManager.clearFocus()
+                onBookClick(it)
+            },
             modifier = Modifier
                 .padding(padding)
-                .fillMaxSize()
                 .clearFocusOnTap(focusManager)
-        ) {
-            if (filteredBooks.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    EmptyState()
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BookList(
+    books: List<BookData>,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
+    onBookClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        modifier = modifier.fillMaxSize()
+    ) {
+        if (books.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                EmptyState()
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 12.dp, horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(
+                    items = books,
+                    key = { book -> book.id }
+                ) { book ->
+                    BookCard(
+                        book = book,
+                        onClick = { onBookClick(book.id) }
+                    )
                 }
-            } else {
-                BookList(
-                    books = filteredBooks,
-                    onBookClick = {
-                        focusManager.clearFocus()
-                        onBookClick(it)
-                    }
-                )
             }
         }
     }
 }
-
-@Composable
-fun BookList(
-    books: List<BookData>,
-    onBookClick: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 12.dp, horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(
-            items = books,
-            key = { book -> book.id }
-        ) { book ->
-            BookCard(
-                book = book,
-                onClick = { onBookClick(book.id) }
-            )
-        }
-    }
-}
-
 @Composable
 fun BookCard(
     book: BookData,
@@ -521,7 +522,7 @@ fun BookDetailDialog(
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                         ) {
-                            Text("Save Changes")
+                            Text("Save")
                         }
                         OutlinedButton(
                             onClick = {

@@ -6,7 +6,6 @@ import io.realm.kotlin.types.RealmList
 
 class BookDetail : EmbeddedRealmObject {
     var images: RealmList<ImageInfo> = realmListOf()
-
     var description: String = ""
     var summary: String = ""
     var language: String = "en"
